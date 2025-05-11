@@ -1,0 +1,36 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>Quartz Slab Visualizer Demo</title>
+</head>
+
+<body>
+    <div class="main-container">
+        <div class = "image-upload">
+            <h1>Quartz Slab Visualizer</h1>
+            <input type="file" id="imageInput" class="mb-4">
+            <button id="uploadBtn" class = "uploadBtn">Upload Image</button>
+            <div id="canvas-wrapper">
+                <canvas id="canvas" width="800" height="600"></canvas>
+            </div>
+        </div>
+
+        <div id ="slab-thumbnails">
+            {% for slab in slabs %}
+                <div class="slab-thumbnail" data-slab="{{ slab }}">
+                    <img src="{{ media_url }}slabs/{{ slab }}" alt="{{ slab }}" class="slab-img" data-src="{{ media_url }}slabs/{{ slab }}" draggable="true">
+                </div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+    <script src="{% static 'script.js' %}"></script>
+</body>
+
+</html>

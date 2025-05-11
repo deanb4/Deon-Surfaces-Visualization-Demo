@@ -1,0 +1,11 @@
+Django>=4.0,<5.0
+djangorestframework
+requests
+Pillow
+transformers
+torch
+torchvision
+numpy
+matplotlib
+opencv-python
+python-dotenv

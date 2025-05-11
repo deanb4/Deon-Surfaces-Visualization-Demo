@@ -55,8 +55,6 @@ Then, install dependencies
 ```bash
     python manage.py runserver
 ```
-Your app will be running at http://127.0.0.1:8000/.
-
 
 ## Usage
 

@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-!)a(e#d%zgbuc(mktxjv2z%&g&+nuw3408=m4mk!k%3(6!&d#4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['Deon-Surfaces-Visualization-Demo.onrender.com']
 
 
 # Application definition

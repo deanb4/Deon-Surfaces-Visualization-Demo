@@ -40,7 +40,8 @@ This project demonstrates a **semantic segmentation** application using a pre-tr
     venv\Scripts\activate      # For Windows
 ```
 
-### Then, install dependencies
+Then, install dependencies
+
 ```bash
     pip install -r requirements.txt
 ```

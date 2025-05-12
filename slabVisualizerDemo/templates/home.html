@@ -19,9 +19,10 @@
             <select id="room-select">
                 <option value="" disabled selected>Select a Room </option>
                 {% for image in room_images %}
-                    <option value="{{ media_url }}room_images/{{ image }}">{{ image }}</option>
+                <option value="{{ media_url }}room_images/{{ image }}">{{ image }}</option>
                 {% endfor %}
             </select>
+            <span>(may take a while to load)</span>
             <br>
             <br>
             <!-- Upload option -->

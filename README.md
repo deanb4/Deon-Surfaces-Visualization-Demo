@@ -32,6 +32,9 @@ This project demonstrates a **semantic segmentation** application using a pre-tr
 ```bash
     cd deonSurfacesDemo
 ```
+### Installation
+
+#### Option 1: Manual Installation
 
 3. Install the required dependencies. You can create a virtual environment (optional but recommended):
 ```bash
@@ -54,6 +57,24 @@ Then, install dependencies
 5. Start development server:
 ```bash
     python manage.py runserver
+```
+
+#### Option 2: Docker Installation
+
+1. Navigate to the project directory:
+```bash
+    cd deonSurfacesDemo
+```
+
+2. Build the docker image:
+```bash
+    docker build -t deonsurfacesdemo .
+```
+
+3. Run the docker container:
+```bash
+    docker run -p 8000:8000 deonsurfacesdemo 
+
 ```
 
 ## Usage

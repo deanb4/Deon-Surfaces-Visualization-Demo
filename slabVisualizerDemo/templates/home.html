@@ -13,8 +13,22 @@
     <div class="main-container">
         <div class = "image-upload">
             <h1>Quartz Slab Visualizer</h1>
+
+            <!-- Dropdown for selecting room background -->
+            <label for="room-select">Choose a Room from the dropdown menu or upload your own</label>
+            <select id="room-select">
+                <option value="" disabled selected>Select a Room </option>
+                {% for image in room_images %}
+                    <option value="{{ media_url }}room_images/{{ image }}">{{ image }}</option>
+                {% endfor %}
+            </select>
+            <br>
+            <br>
+            <!-- Upload option -->
             <input type="file" id="imageInput" class="mb-4">
             <button id="uploadBtn" class = "uploadBtn">Upload Image</button>
+            <span>(click on upload image after selecting image)</span>
+            <button id="resetSlabsBtn">Reset</button>
             <div id="canvas-wrapper">
                 <canvas id="canvas" width="800" height="600"></canvas>
             </div>

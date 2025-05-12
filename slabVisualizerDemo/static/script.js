@@ -7,31 +7,73 @@ let width = 0;
 
 document.getElementById('uploadBtn').addEventListener('click', async () => {
     const fileInput = document.getElementById('imageInput');
-    if (!fileInput.files.length) return alert("Please select an image");
+    const dropdown = document.getElementById('room-select');
+    let dropdownFile = null;
+
+    if (!fileInput.files.length && !dropdown) return alert("Please select an image");
+
+    const file = fileInput.files[0];
+    const dropdownValue = dropdown.value;
+    console.log(dropdownValue)
+
+    if (!file && !dropdownValue){
+        return alert("Please select an image from dropdown or upload your own."); 
+    } 
 
     const formData = new FormData();
-    formData.append('image', fileInput.files[0]);
 
-    const response = await fetch('http://127.0.0.1:8000/upload/', {
-       method: 'POST',
-       body: formData 
-    });
-
-    const data = await response.json();
-
-    if (data.error) {
-        return alert('AI processing failed: ' + data.error);
+    if (file) {
+        formData.append('image', fileInput.files[0]);
+        fileInput.value =""; 
+    } else if (dropdownValue) {
+        console.log("dropdown value selected")
+        try {
+            const response = await fetch(dropdownValue);
+            const blob = await response.blob()
+            const filename = dropdownValue.split('/').pop();
+            dropdownFile = new File([blob], filename, { type: blob.type });
+            formData.append('image', dropdownFile);
+        } catch (err) {
+            return alert("Failed to load image from dropdown menu: " + err.message);
+        }
     }
+    //     const response = await fetch('http://127.0.0.1:8000/upload/', {
+    try {
+        const response = await fetch('/upload/', {
+            method: 'POST',
+            body: formData 
+        });
 
-    // If all good, render the canvas using fabric
-    renderCanvasImages(fileInput.files[0], data.mask_url);
-    fetchSegmentationMap(data.segmentation_map)
+        const data = await response.json();
+
+        if (data.error) {
+            return alert('AI processing failed: ' + data.error);
+        }
+
+        // If all good, render the canvas using fabric
+        // renderCanvasImages(fileInput.files[0], data.mask_url);
+        if (file) {
+            renderCanvasImages(file, data.mask_url);
+            console.log("rendering")
+        } else if (dropdownFile) {
+            renderCanvasImages(dropdownFile, data.mask_url);
+            console.log("rendering")
+        }
+        fetchSegmentationMap(data.segmentation_map)
+
+    } catch (err) {
+        alert("Upload failed " + err.message);
+    }
 
 });
 
 function renderCanvasImages(file, maskUrl) {
     const reader = new FileReader();
     reader.onload = () => {
+        // Reset
+        canvas.clear();
+        canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas));
+
         fabric.Image.fromURL(reader.result, function(img) {
             const originalWidth = img.width;
             const originalHeight = img.height;
@@ -179,6 +221,24 @@ canvasWrapper.addEventListener('drop', (e) => {
         return;
     }
     
+    // const depthValue = fetchDepthValue(segmentationX, segmentationY);
+    
+    // // Calculate scale factor based on depth
+    // const scaleFactor = calculateScaleFactor(depthValue);
+    
+    // // Load the slab image and apply texture or other transformations
+    // fabric.util.loadImage(draggedSlabSrc, (img) => {
+        //     // Create the slab object with the adjusted scale based on depth
+    //     const pattern = new fabric.Image(img, {
+        //         left: offsetX - (img.width * scaleFactor) / 2, // Adjust position based on scale
+        //         top: offsetY - (img.height * scaleFactor) / 2, // Adjust position based on scale
+        //         scaleX: scaleFactor,
+        //         scaleY: scaleFactor,
+    //         hasControls: true,
+    //         hasBorders: true,
+    //         selectable: true,
+    //     });
+    
     fabric.util.loadImage(draggedSlabSrc, (img) => {
         const pattern = new fabric.Pattern({
             source: img,
@@ -196,7 +256,8 @@ canvasWrapper.addEventListener('drop', (e) => {
             hasControls: true,
             hasBorders: true,
             originX: 'left',
-            originY: 'top'
+            originY: 'top',
+            customType: 'slab'
         });
     
         // Apply the segmentation mask as the clip path
@@ -317,6 +378,85 @@ function loadTextureAndApply(segmentValue) {
         document.body.appendChild(baseCanvas.getElement());
     };
 }
+
+// Function to fetch the depth value for a specific position in the segmentation map
+async function fetchDepthValue(x, y) {
+    // Prepare form data to send to the backend
+    const formData = new FormData();
+    formData.append("x", x);
+    formData.append("y", y);
+
+    // Send POST request to backend
+    const response = await fetch("/render/", {
+        method: "POST",
+        body: formData,
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch depth data');
+    }
+
+    // Assuming the backend returns the depth value in the response body
+    const data = await response.json();
+
+    // Extract and return the depth value from the response
+    return data.depthValue; // Adjust based on your backend's response format
+}
+
+// Function to calculate scale factor based on the depth value
+function calculateScaleFactor(depth) {
+    // Simple example: inverse depth scaling (closer objects appear larger)
+    const maxDepth = 100; // Max depth value (adjust as needed)
+    const minScale = 0.2; // Minimum scale
+    const maxScale = 1; // Maximum scale
+
+    // Scale inversely with depth (closer slabs are bigger)
+    const scale = (maxDepth - depth) / maxDepth;
+    return minScale + scale * (maxScale - minScale);
+}
+
+
+document.getElementById('resetSlabsBtn').addEventListener('click', () => {
+    const slabsToRemove = canvas.getObjects().filter(obj => obj.customType == 'slab');
+    slabsToRemove.forEach(slab => canvas.remove(slab));
+    canvas.renderAll();
+});
+// function changeRoomBackground() {
+//     var select = document.getElementById("room-select");
+//     var roomImageUrl = select.value;
+
+//     if (roomImageUrl) {
+//         fabric.Image.fromUrl(roomImageUrl, function(img) {
+//             // Remove any previous background image
+//             canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
+//                 scaleX: canvas.width / img.width,
+//                 scaleY: canvas.height / img.height
+//             });
+//         });
+//     }
+
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     // took out of get element by id  function (first one) 

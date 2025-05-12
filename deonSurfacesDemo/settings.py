@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-!)a(e#d%zgbuc(mktxjv2z%&g&+nuw3408=m4mk!k%3(6!&d#4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['Deon-Surfaces-Visualization-Demo.onrender.com']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '0.0.0.0', '192.168.1.231', '68.248.143.122' ]
 
 
 # Application definition
@@ -49,7 +49,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
+
+# Enable Whitenoise compressed static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 ROOT_URLCONF = 'deonSurfacesDemo.urls'
 

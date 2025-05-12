@@ -14,6 +14,9 @@ from dotenv import load_dotenv
 import os
 import torchvision.transforms as T
 import torch
+from django.views.decorators.csrf import csrf_exempt
+# from . import depth_estimation
+from django.http import HttpResponse
 
 
 @api_view(['POST'])
@@ -100,13 +103,29 @@ def process_with_ai(image_path):
         image_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         seg_image_bgr = cv2.cvtColor(seg_image, cv2.COLOR_RGB2BGR)
 
-          # Resize segmentation map to match original image
+
+        # addition of depth ai
+        # depth_map = estimate_depth(image_path)  # returns np.array (H, W)
+
+        # # Normalize and convert to colormap
+        # if depth_map.max() > 1.0:
+        #     depth_map = cv2.normalize(depth_map, None, 0, 255, cv2.NORM_MINMAX)
+        # depth_map_colored = cv2.applyColorMap(depth_map.astype(np.uint8), cv2.COLORMAP_MAGMA)
+
+        # # Resize if needed
+        # depth_map_colored = cv2.resize(depth_map_colored, (image_cv.shape[1], image_cv.shape[0]))
+
+
+
+        # Resize segmentation map to match original image
         seg_image_bgr = cv2.resize(seg_image_bgr, (image_cv.shape[1], image_cv.shape[0]))
 
         alpha = 0.5
         overlay = cv2.addWeighted(image_cv, 1 - alpha, seg_image_bgr, alpha, 0)
+        # seg_overlay = cv2.addWeighted(image_cv, 1 - alpha, seg_image_bgr, alpha, 0)
+        # final_overlay = cv2.addWeighted(seg_overlay, 1 - alpha, depth_map_colored, alpha, 0)
 
-        # Sharped Overlay
+        # Sharped Overlay (unused)
         sharpen_kernel = np.array([[0, -1, 0],
                                  [-1, 5, -1],
                                  [0, -1, 0]])
@@ -145,9 +164,12 @@ def process_with_ai(image_path):
 
 def home(request):
     slab_folder = os.path.join(settings.MEDIA_ROOT, 'slabs')
+    room_images_dir = os.path.join(settings.MEDIA_ROOT, 'room_images')
+    room_images = os.listdir(room_images_dir)
     slabs = os.listdir(slab_folder)
     return render(request, 'home.html', {
         'slabs':slabs,
+        'room_images': room_images,
         'media_url': settings.MEDIA_URL,
         })
 
@@ -155,3 +177,86 @@ def home(request):
 # def overlaySegmentImage():
 #     original = cv2.imread(r"C:\Users\deanb\OneDrive\dad company project\deonSurfacesDemoImage.jpg")
 #     segmented = 
+#Option A: Poisson Seamless Clone
+# def blend_slab(room_np, warped_slab, mask_np):
+#     center = (room_np.shape[1] // 2, room_np.shape[0] // 2)
+#     mask_3ch = cv2.merge([mask_np] * 3)
+#     return cv2.seamlessClone(warped_slab, room_np, mask_3ch, center, cv2.NORMAL_CLONE)
+
+#Option B: Alpha Blend with Feathering
+# def blend_slab(room_np, warped_slab, mask_np):
+#     # Feather edges
+#     blur_mask = cv2.GaussianBlur(mask_np, (31, 31), 0)
+#     alpha = blur_mask.astype(np.float32) / 255.0
+#     alpha = np.stack([alpha]*3, axis=-1)
+
+#     blended = (alpha * warped_slab + (1 - alpha) * room_np).astype(np.uint8)
+#     return blended
+
+
+# def order_points(pts):
+#     rect = np.zeros((4, 2), dtype="float32")
+#     s = pts.sum(axis=1)
+#     rect[0] = pts[np.argmin(s)]      # top-left
+#     rect[2] = pts[np.argmax(s)]      # bottom-right
+
+#     diff = np.diff(pts, axis=1)
+#     rect[1] = pts[np.argmin(diff)]   # top-right
+#     rect[3] = pts[np.argmax(diff)]   # bottom-left
+#     return rect
+
+# def warp_slab_to_mask(mask_np, slab_np, depth_map):
+#     # Find largest contour
+#     contours, _ = cv2.findContours(mask_np, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+#     if not contours:
+#         return slab_np  # fallback
+
+#     contour = max(contours, key=cv2.contourArea)
+#     approx = cv2.approxPolyDP(contour, 0.02 * cv2.arcLength(contour, True), True)
+
+#     if len(approx) < 4:
+#         return slab_np  # not enough corners
+
+#     # Sort corners
+#     points_dst = np.array([pt[0] for pt in approx[:4]], dtype=np.float32)
+#     points_dst = order_points(points_dst)
+
+#     # Source corners: corners of the slab
+#     h, w = slab_np.shape[:2]
+#     points_src = np.array([[0, 0], [w, 0], [w, h], [0, h]], dtype=np.float32)
+
+#     # Homography
+#     H, _ = cv2.findHomography(points_src, points_dst)
+
+#     room_h, room_w = depth_map.shape[:2]
+#     warped_slab = cv2.warpPerspective(slab_np, H, (room_w, room_h))
+
+#     return warped_slab
+
+
+# @csrf_exempt
+# @api_view(['POST'])
+# def render_realistic(request):
+#     room_img = Image.open(request.FILES['roomImage']).convert("RGB")
+#     slab_img = Image.open(request.FILES['slabImage']).convert("RGB")
+#     mask_img = Image.open(request.FILES['maskImage']).convert("L")
+
+#     # Convert to NumPy
+#     room_np = np.array(room_img)
+#     slab_np = np.array(slab_img)
+#     mask_np = np.array(mask_img)
+
+#     # Step 1: Depth Estimation (You already implemented this!)
+#     depth_map = depth_estimation.estimate_depth(room_np)  # returns np.array
+
+#     # Step 2: Warp slab using depth + mask
+#     warped_slab = warp_slab_to_mask(mask_np, slab_np, depth_map)
+
+#     # Step 3: Blend slab into room image
+#     blended_output = blend_slab(room_np, warped_slab, mask_np)
+
+#     # Convert to image and return
+#     output_img = Image.fromarray(blended_output)
+#     response = HttpResponse(content_type="image/png")
+#     output_img.save(response, "PNG")
+#     return response

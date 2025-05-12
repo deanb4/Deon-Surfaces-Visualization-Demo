@@ -10,3 +10,4 @@ matplotlib
 opencv-python
 python-dotenv
 gunicorn
+whitenoise==6.5.0

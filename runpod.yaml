@@ -1,0 +1,9 @@
+# runpod.yaml
+version: "1.0"
+name: deonSurfacesDemo
+image: 
+port: 8000
+gpu: true
+volume:
+  mountPath /app
+  containerPath /app
